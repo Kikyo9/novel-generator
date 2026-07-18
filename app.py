@@ -104,30 +104,7 @@ with st.sidebar:
                 icon = "○"
             st.markdown(f"{icon} {label}")
 
-# ---- Main Content ----
-if st.session_state.page == "workshop":
-    step = st.session_state.workshop_step
 
-    if step == "config":
-        render_config_panel()
-
-    elif step == "outline":
-        render_outline_editor()
-
-    elif step == "generating":
-        _render_generation()
-
-    elif step == "reading":
-        render_reader()
-
-elif st.session_state.page == "bookshelf":
-    render_bookshelf()
-
-elif st.session_state.page == "settings":
-    render_settings()
-
-
-# ---- Generation Logic ----
 def _render_generation():
     """Handle chapter generation based on the selected mode."""
     config = st.session_state.get("workshop_config", {})
@@ -361,6 +338,31 @@ def _save_locally():
     """Save current novel to local storage."""
     novel_id = st.session_state.get("current_novel_id", str(uuid.uuid4())[:8])
     st.session_state.current_novel_id = novel_id
+
+# ---- Main Content ----
+if st.session_state.page == "workshop":
+    step = st.session_state.workshop_step
+
+    if step == "config":
+        render_config_panel()
+
+    elif step == "outline":
+        render_outline_editor()
+
+    elif step == "generating":
+        _render_generation()
+
+    elif step == "reading":
+        render_reader()
+
+elif st.session_state.page == "bookshelf":
+    render_bookshelf()
+
+elif st.session_state.page == "settings":
+    render_settings()
+
+
+# ---- Generation Logic ----
 
     config = st.session_state.get("workshop_config", {})
     local = st.session_state.get("local_novels", [])
