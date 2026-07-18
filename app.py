@@ -135,6 +135,13 @@ def _render_generation():
     chapters = st.session_state.get("generated_chapters", {})
     mode = config.get("generation_mode", "outline_chapters")
 
+    if not outline:
+        st.warning("没有找到章节大纲，请返回第二步生成大纲。")
+        if st.button("⬅ 返回大纲编辑"):
+            st.session_state.workshop_step = "outline"
+            st.rerun()
+        return
+
     api_key = st.secrets.get("DEEPSEEK_API_KEY", "")
     if not api_key:
         st.error("未配置 DeepSeek API Key")
@@ -155,7 +162,7 @@ def _render_generation():
 
     # ---- Mode: outline_chapters ----
     if mode == "outline_chapters":
-        all_done = all(str(i) in chapters for i in range(len(outline)))
+        all_done = len(outline) > 0 and all(str(i) in chapters for i in range(len(outline)))
         if all_done:
             st.success("🎉 所有章节已生成完毕！")
             if st.button("📖 开始阅读", type="primary"):
@@ -310,7 +317,7 @@ def _render_generation():
 
     # ---- Mode: outline_batch ----
     elif mode == "outline_batch":
-        all_done = all(str(i) in chapters for i in range(len(outline)))
+        all_done = len(outline) > 0 and all(str(i) in chapters for i in range(len(outline)))
         if all_done:
             st.success("🎉 所有章节已生成完毕！")
             if st.button("📖 开始阅读", type="primary"):
