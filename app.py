@@ -86,14 +86,22 @@ with st.sidebar:
         steps = [
             ("1. 设定", "config"),
             ("2. 大纲", "outline"),
+            ("⚙ 生成中", "generating"),
             ("3. 阅读", "reading"),
         ]
         current = st.session_state.workshop_step
 
         st.caption("创作进度")
         for label, step_key in steps:
-            icon = "✅" if step_key == current else ("●" if steps.index((label, step_key)) <
-                   [s[1] for s in steps].index(current) else "○")
+            step_keys = [s[1] for s in steps]
+            current_idx = step_keys.index(current) if current in step_keys else -1
+            this_idx = step_keys.index(step_key)
+            if step_key == current:
+                icon = "⏳" if step_key == "generating" else "✅"
+            elif current_idx >= 0 and this_idx < current_idx:
+                icon = "✅"
+            else:
+                icon = "○"
             st.markdown(f"{icon} {label}")
 
 # ---- Main Content ----
