@@ -68,11 +68,10 @@ def render_reader():
     # Chapter selector
     ch_labels = [f"第{ch['number']}章 {ch['title']}" for ch in outline]
     if ch_labels:
-        # Sync selectbox state with current chapter
-        st.session_state.chapter_selector = ch_labels[min(current_ch, len(ch_labels) - 1)]
         selected_label = st.selectbox(
             "跳转到章节", ch_labels,
-            key="chapter_selector"
+            key="chapter_selector",
+            index=min(current_ch, len(ch_labels) - 1)
         )
         selected_idx = ch_labels.index(selected_label)
         if selected_idx != current_ch:
@@ -146,14 +145,10 @@ def render_reader():
     with cn1:
         if current_ch > 0 and st.button("\u2b05 上一章", use_container_width=True, key="nav_prev"):
             st.session_state.reader_current_chapter = current_ch - 1
-            if ch_labels:
-                st.session_state.chapter_selector = ch_labels[current_ch - 1]
             st.rerun()
     with cn3:
         if current_ch < len(outline) - 1 and st.button("下一章 \u27a1", use_container_width=True, key="nav_next"):
             st.session_state.reader_current_chapter = current_ch + 1
-            if ch_labels:
-                st.session_state.chapter_selector = ch_labels[current_ch + 1]
             st.rerun()
 
     st.markdown("</div>", unsafe_allow_html=True)
