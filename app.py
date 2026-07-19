@@ -155,8 +155,8 @@ def _render_generation():
         # One-click generate all button
         ungenerated = sum(1 for i in range(len(outline)) if str(i) not in chapters)
         if ungenerated > 0:
-            st.button(f"⚡ 一键生成 {ungenerated} 章", key="batch_gen_all", type="primary")
-        if st.session_state.get("batch_gen_all"):
+            st.button(f"⚡ 一键生成 {ungenerated} 章", key="batch_gen_all", type="primary", on_click=lambda: st.session_state.__setitem__("_batch_active", True))
+        if st.session_state.get("_batch_active"):
             from utils.ai_client import NovelAI as NAI2
             ai2 = NAI2(api_key)
             pbar = st.progress(0)
@@ -177,7 +177,7 @@ def _render_generation():
                     st.error(f"第{bc['number']}章\u5931\u8d25：{e2}")
                 pbar.progress((bi + 1) / len(outline))
             stxt.text("\u5168\u90e8章\u8282\u751f\u6210\u5b8c\u6bd5\uff01")
-            st.session_state.batch_gen_all = False
+            st.session_state._batch_active = False
             st.rerun()
 
         for idx, ch in enumerate(outline):
