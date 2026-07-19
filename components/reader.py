@@ -4,6 +4,14 @@ from utils.epub_generator import generate_epub, is_epub_available
 from components.styles import READER_CSS
 
 
+
+def _on_chapter_select():
+    """Callback: fires only when user interacts with selectbox."""
+    labels = st.session_state.get("_ch_labels", [])
+    sel = st.session_state.get("chapter_selector", "")
+    if sel in labels:
+        st.session_state.reader_current_chapter = labels.index(sel)
+
 def render_reader():
     """Render the book reader with paper-like styling."""
     st.markdown(READER_CSS, unsafe_allow_html=True)
@@ -65,18 +73,17 @@ def render_reader():
                 else:
                     st.error("无法连接 Supabase")
 
-    # Chapter selector
+    # Chapter selector (with on_change to avoid overriding nav buttons)
     ch_labels = [f"第{ch['number']}章 {ch['title']}" for ch in outline]
     if ch_labels:
+        # Store labels for callback access
+        st.session_state._ch_labels = ch_labels
+        # Use on_change to only fire when user interacts with selectbox
         selected_label = st.selectbox(
             "跳转到章节", ch_labels,
             key="chapter_selector",
-            index=min(current_ch, len(ch_labels) - 1)
+            on_change=_on_chapter_select
         )
-        selected_idx = ch_labels.index(selected_label)
-        if selected_idx != current_ch:
-            st.session_state.reader_current_chapter = selected_idx
-            st.rerun()
 
     # Controls
     c1, c2, c3, c4 = st.columns(4)
