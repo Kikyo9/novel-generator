@@ -148,12 +148,12 @@ def render_reader():
     </div>
     """, unsafe_allow_html=True)
 
-    # Scroll to top of reader when chapter changes
+    # Scroll to top when chapter changes — uses components.html because
+    # Streamlit silently strips <script> from st.markdown unsafe_allow_html.
     if current_ch != st.session_state.get("_prev_reader_ch", -1):
         st.session_state._prev_reader_ch = current_ch
-        st.markdown(
-            '<script>setTimeout(function(){window.scrollTo({top:0,behavior:"smooth"})},200)</script>',
-            unsafe_allow_html=True)
+        import streamlit.components.v1 as components
+        components.html("<script>window.parent.scrollTo(0,0)</script>", height=0)
 
     # Chapter navigation
     cn1, cn2, cn3 = st.columns([1, 2, 1])
