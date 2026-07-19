@@ -152,7 +152,7 @@ def render_reader():
     if current_ch != st.session_state.get("_prev_reader_ch", -1):
         st.session_state._prev_reader_ch = current_ch
         st.markdown(
-            '<script>(function(){var e=document.getElementById("reader-top");if(e){var t=e.getBoundingClientRect().top+window.pageYOffset-80;window.scrollTo({top:t,behavior:"smooth"})}})()</script>',
+            '<script>requestAnimationFrame(function(){requestAnimationFrame(function(){var e=document.getElementById("reader-top");if(e){var r=e.getBoundingClientRect();window.scrollTo({top:window.scrollY+r.top-64,behavior:"smooth"})}})})</script>',
             unsafe_allow_html=True)
 
     # Chapter navigation
