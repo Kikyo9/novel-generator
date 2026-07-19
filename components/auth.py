@@ -18,6 +18,8 @@ def get_supabase_store() -> NovelStore | None:
         if access_token:
             try:
                 store.client.auth.set_session(access_token, refresh_token)
+                # Double-insure: set postgrest auth header directly
+                store.client.postgrest.auth(access_token)
             except Exception:
                 pass
     return store
@@ -64,8 +66,10 @@ def render_auth():
                             if sess:
                                 st.session_state._supabase_access_token = sess.access_token
                                 st.session_state._supabase_refresh_token = getattr(sess, 'refresh_token', '')
-                        except Exception:
-                            pass
+                                import sys
+                                print(f"Token stored: {len(sess.access_token)} chars", file=sys.stderr)
+                        except Exception as e:
+                            print(f"get_session error: {e}", file=sys.stderr)
                         st.rerun()
                     else:
                         st.error(result.get("error", "登录\u5931\u8d25"))
@@ -88,8 +92,10 @@ def render_auth():
                             if sess:
                                 st.session_state._supabase_access_token = sess.access_token
                                 st.session_state._supabase_refresh_token = getattr(sess, 'refresh_token', '')
-                        except Exception:
-                            pass
+                                import sys
+                                print(f"Token stored: {len(sess.access_token)} chars", file=sys.stderr)
+                        except Exception as e:
+                            print(f"get_session error: {e}", file=sys.stderr)
                         st.rerun()
                     else:
                         st.error(result.get("error", "注册\u5931\u8d25"))
