@@ -431,17 +431,16 @@ elif st.session_state.page == "settings":
     user_id = st.session_state.get("user_id", "")
     if user_id:
         try:
-            su_url = st.secrets.get("SUPABASE_URL", "")
-            su_key = st.secrets.get("SUPABASE_ANON_KEY", "")
-            if su_url and "your-project" not in su_url:
-                from utils.supabase_client import NovelStore
-                store2 = NovelStore(su_url, su_key)
-                if store2.is_connected():
-                    if novel_id and any(n.get("id") == novel_id for n in local):
-                        store2.update_novel(novel_id, novel_entry)
-                    else:
-                        new_id = store2.save_novel(user_id, novel_entry)
-                        if new_id:
-                            st.session_state.current_novel_id = new_id
-        except Exception:
-            pass
+            from components.auth import get_supabase_store
+            store2 = get_supabase_store()
+            if store2 and store2.is_connected():
+                if novel_id and any(n.get("id") == novel_id for n in local):
+                    store2.update_novel(novel_id, novel_entry)
+                else:
+                    new_id = store2.save_novel(user_id, novel_entry)
+                    if new_id:
+                        st.session_state.current_novel_id = new_id
+        except Exception as e:
+            import traceback
+            print(f"Supabase save error: {e}")
+            print(traceback.format_exc())

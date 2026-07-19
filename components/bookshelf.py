@@ -2,7 +2,6 @@
 import streamlit as st
 import json
 from datetime import datetime
-from utils.supabase_client import NovelStore
 
 
 def render_bookshelf():
@@ -17,16 +16,10 @@ def render_bookshelf():
             st.rerun()
         return
 
-    supabase_url = st.secrets.get("SUPABASE_URL", "")
-    supabase_key = st.secrets.get("SUPABASE_ANON_KEY", "")
-
-    if not supabase_url or "your-project" in supabase_url:
-        st.warning("Supabase 未配置，无法加载书架。")
-        return
-
-    store = NovelStore(supabase_url, supabase_key)
-    if not store.is_connected():
-        st.error("无法连接 Supabase，请检查配置。")
+    from components.auth import get_supabase_store
+    store = get_supabase_store()
+    if store is None or not store.is_connected():
+        st.error("无法连接 Supabase，请先登录。")
         return
 
     novels = store.get_user_novels(user_id)

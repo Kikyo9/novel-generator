@@ -3,18 +3,22 @@ import streamlit as st
 from utils.supabase_client import NovelStore
 
 
+def get_supabase_store() -> NovelStore | None:
+    """Get or create a shared Supabase store with auth session."""
+    if "_supabase_store" not in st.session_state:
+        su_url = st.secrets.get("SUPABASE_URL", "")
+        su_key = st.secrets.get("SUPABASE_ANON_KEY", "")
+        if su_url and "your-project" not in su_url:
+            store = NovelStore(su_url, su_key)
+            st.session_state._supabase_store = store
+    return st.session_state.get("_supabase_store")
+
+
 def render_auth():
     """Render login/register form. Returns True if logged in."""
-    supabase_url = st.secrets.get("SUPABASE_URL", "")
-    supabase_key = st.secrets.get("SUPABASE_ANON_KEY", "")
-
-    if not supabase_url or "your-project" in supabase_url:
+    store = get_supabase_store()
+    if store is None or not store.is_connected():
         st.sidebar.warning("Supabase 未配置")
-        return False
-
-    store = NovelStore(supabase_url, supabase_key)
-    if not store.is_connected():
-        st.sidebar.warning("无法连接 Supabase")
         return False
 
     # Check existing session
@@ -63,9 +67,9 @@ def render_auth():
                 else:
                     result = store.sign_up(email_reg, password_reg)
                     if "user" in result:
-                        st.success("注册成功！请查看邮箱确认（或已自动登录）")
                         st.session_state.supabase_user = result["user"]
                         st.session_state.user_id = result["user"]["id"]
+                        st.success("注册成功！如提示需确认邮箱，请在 Supabase 设置中关闭邮件确认。")
                         st.rerun()
                     else:
                         st.error(result.get("error", "注册失败"))
