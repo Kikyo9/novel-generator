@@ -370,9 +370,54 @@ def _render_generation():
 
 
 def _save_locally():
-    """Save current novel to local storage."""
+    """Save current novel to local storage and Supabase."""
     novel_id = st.session_state.get("current_novel_id", str(uuid.uuid4())[:8])
     st.session_state.current_novel_id = novel_id
+
+    config = st.session_state.get("workshop_config", {})
+    local = st.session_state.get("local_novels", [])
+
+    novel_entry = {
+        "id": novel_id,
+        "title": st.session_state.get("final_title", config.get("novel_title", "未命名")),
+        "categories": config.get("categories", []),
+        "length": config.get("length", ""),
+        "styles": config.get("styles", []),
+        "synopsis": st.session_state.get("novel_synopsis", ""),
+        "outline": st.session_state.get("workshop_outline", []),
+        "chapters": st.session_state.get("generated_chapters", {}),
+        "config": config,
+        "created_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+
+    # Update or append locally
+    found = False
+    for i, n in enumerate(local):
+        if n.get("id") == novel_id:
+            local[i] = novel_entry
+            found = True
+            break
+    if not found:
+        local.append(novel_entry)
+    st.session_state.local_novels = local
+
+    # Also save to Supabase if logged in
+    user_id = st.session_state.get("user_id", "")
+    if user_id:
+        try:
+            from components.auth import get_supabase_store
+            store2 = get_supabase_store()
+            if store2 and store2.is_connected():
+                if novel_id and any(n.get("id") == novel_id for n in local):
+                    store2.update_novel(novel_id, novel_entry)
+                else:
+                    new_id = store2.save_novel(user_id, novel_entry)
+                    if new_id:
+                        st.session_state.current_novel_id = new_id
+        except Exception as e:
+            import sys
+            print(f"Supabase save error: {e}", file=sys.stderr)
 
 # ---- Main Content ----
 if st.session_state.page == "workshop":
