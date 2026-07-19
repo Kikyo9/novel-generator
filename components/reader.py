@@ -140,8 +140,8 @@ def render_reader():
     paragraphs = "".join(f"<p>{p}</p>" for p in content.strip().split("\n") if p.strip())
 
     st.markdown(f"""
-    <div id="reader-top"></div>
     <div class="reader-book" style="font-size:{font_size}px;line-height:{line_height};">
+        <div id="reader-top" style="scroll-margin-top:80px;"></div>
         <div class="chapter-title">第{ch['number']}章 {ch['title']}</div>
         <div class="chapter-content">{paragraphs}</div>
         <div class="reader-progress">第 {current_ch + 1} / {len(outline)} 章</div>
@@ -152,7 +152,7 @@ def render_reader():
     if current_ch != st.session_state.get("_prev_reader_ch", -1):
         st.session_state._prev_reader_ch = current_ch
         st.markdown(
-            '<script>setTimeout(function(){var e=document.getElementById("reader-top");if(e)e.scrollIntoView({behavior:"smooth"})},150)</script>',
+            '<script>setTimeout(function(){var e=document.getElementById("reader-top");if(e)e.scrollIntoView({behavior:"smooth",block:"start"})},250)</script>',
             unsafe_allow_html=True)
 
     # Chapter navigation
