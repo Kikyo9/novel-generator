@@ -17,8 +17,7 @@ def get_supabase_store() -> NovelStore | None:
         refresh_token = st.session_state.get("_supabase_refresh_token", "")
         if access_token:
             try:
-                store.client.auth.set_session(access_token, refresh_token)
-                # Double-insure: set postgrest auth header directly
+                # set_session is broken in supabase-py 2.31 — use postgrest.auth directly
                 store.client.postgrest.auth(access_token)
             except Exception:
                 pass

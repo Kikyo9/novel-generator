@@ -56,6 +56,14 @@ class NovelStore:
         """Save a novel to Supabase. Returns novel_id or empty string."""
         if not self.client:
             return ""
+        # Ensure postgrest auth is set from session state if available
+        import streamlit as st
+        try:
+            access_token = st.session_state.get("_supabase_access_token", "")
+            if access_token:
+                self.client.postgrest.auth(access_token)
+        except Exception:
+            pass
         payload = {
             "user_id": user_id,
             "title": novel_data.get("title", "未命名"),
