@@ -64,42 +64,52 @@ class NovelAI:
         return self._parse_json(raw)
 
     def generate_chapter(self, config: dict, outline: list, chapter_index: int,
-                         previous_summary: str = "") -> str:
-        """Generate a single chapter of the novel."""
+                         previous_summary: str = "", previous_chapters: str = "") -> str:
+        """Generate a single chapter with context from previous chapters for coherence."""
         chapter = outline[chapter_index]
         total = len(outline)
 
         word_range = self._word_count_for_length(config.get("length", ""))
 
         system_prompt = f"""\
-你是一位专业的网络小说作家。请根据以下设定和要求，撰写指定章节的内容。
+你是一位专业的网络小说作家，正在创作一部连载小说。请撰写第{chapter['number']}章的内容。
 
-写作要求：
+核心写作要求：
+- 保持与前文的完全连贯：人物性格、对话风格、世界观设定、伏笔线索必须与前面章节一致
+- 本章情节自然承接上一章的结尾，不能出现突兀跳跃
+- 注重情节推进和人物塑造，对话自然流畅，描写生动细腻
 - 严格按照指定的风格和基调进行创作
-- 注重情节推进和人物塑造
-- 对话自然流畅，描写生动细腻
-- 保持与前文的连贯性
 - 本章字数控制在{word_range}左右
-- 直接输出章节正文，不需要标题和章节号"""
+- 直接输出章节正文，不需要标题和章节号
+- 如果上一章有未解决的悬念或冲突，本章要合理延续"""
 
         categories = "、".join(config.get("categories", []))
         styles = "、".join(config.get("styles", []))
         note = chapter.get("note", "")
         note_section = f"\n【本章特别要求】{note}" if note else ""
 
-        user_prompt = f"""\
-【小说分类】{categories}
-【风格基调】{styles}
-【主角设定】{config.get('protagonist', '')}
+        # Build previous context
+        context_parts = [f"【小说分类】{categories}", f"【风格基调】{styles}",
+                        f"【主角设定】{config.get('protagonist', '')}"]
 
-【前文概要】{previous_summary if previous_summary else '（这是第一章，无前文）'}
+        if previous_summary:
+            context_parts.append(f"【前文剧情概要】{previous_summary}")
 
-【本章信息】
-第{chapter['number']}章 / 共{total}章
-章节标题：{chapter['title']}
-内容概要：{chapter['summary']}{note_section}
+        if previous_chapters:
+            # Include last ~2000 chars of previous chapters for immediate continuity
+            recent = previous_chapters[-2000:] if len(previous_chapters) > 2000 else previous_chapters
+            context_parts.append(f"【上一章结尾内容（保持连贯）】\n{recent}")
 
-请开始撰写本章正文："""
+        context_parts.append(f"\n【本章信息】\n第{chapter['number']}章 / 共{total}章")
+        context_parts.append(f"章节标题：{chapter['title']}")
+        context_parts.append(f"内容概要：{chapter['summary']}{note_section}")
+
+        if chapter_index == 0:
+            context_parts.append("\n（这是第一章，请做好世界观和人物的引入）")
+
+        context_parts.append("\n请开始撰写本章正文，确保与前文无缝衔接：")
+
+        user_prompt = "\n".join(context_parts)
 
         return self._call(system_prompt, user_prompt, temperature=0.85, max_tokens=8192)
 
@@ -109,6 +119,13 @@ class NovelAI:
         styles = "、".join(config.get("styles", []))
         word_range = self._word_count_for_length(config.get("length", ""))
 
+        outline_text = ""
+        if outline:
+            outline_text = "\n".join(
+                f"第{ch['number']}章 {ch['title']}：{ch.get('summary', '')}"
+                for ch in outline
+            )
+
         system_prompt = f"""\
 你是一位专业的网络小说作家。请根据用户设定，创作一部完整的网络小说。
 
@@ -116,6 +133,7 @@ class NovelAI:
 - 总字数控制在{word_range}左右
 - 结构完整，有明确的开头、发展、高潮和结局
 - 风格和基调严格遵照用户设定
+- 剧情连贯合理，人物形象鲜明
 - 用"第X章 章节标题"作为每章的分隔标记"""
 
         user_prompt = f"""\
@@ -125,6 +143,7 @@ class NovelAI:
 【风格基调】{styles}
 【篇幅要求】{config.get('length', '')}
 【额外设定】{config.get('free_text', '')}
+【章节大纲】{outline_text}
 
 请开始创作："""
 
@@ -138,7 +157,8 @@ class NovelAI:
 
         system_prompt = """\
 你是一位网络小说作家。请根据前文内容和用户的续写方向，继续创作后续内容。
-保持与前文一致的风格、人设和世界观。直接输出续写内容，不需要额外说明。"""
+保持与前文一致的风格、人设和世界观。剧情承接自然，不要出现跳跃。
+直接输出续写内容，不需要额外说明。"""
 
         user_prompt = f"""\
 【小说分类】{categories}

@@ -3,6 +3,7 @@
 AI-powered web novel generation tool.
 """
 import streamlit as st
+from components.auth import render_auth
 from components.config_panel import render_config_panel, build_config
 from components.outline_editor import render_outline_editor
 from components.reader import render_reader
@@ -60,6 +61,11 @@ with st.sidebar:
         <p style="color:#999;font-size:0.85em;margin:4px 0 0 0;">AI 驱动的网络小说创作工具</p>
     </div>
     """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # Auth
+    logged_in = render_auth()
 
     st.markdown("---")
 
@@ -146,6 +152,34 @@ def _render_generation():
                 st.session_state.workshop_step = "reading"
                 st.rerun()
 
+        # One-click generate all button
+        ungenerated = sum(1 for i in range(len(outline)) if str(i) not in chapters)
+        if ungenerated > 0:
+            st.button(f"⚡ 一键生成 {ungenerated} 章", key="batch_gen_all", type="primary")
+        if st.session_state.get("batch_gen_all"):
+            from utils.ai_client import NovelAI as NAI2
+            ai2 = NAI2(api_key)
+            pbar = st.progress(0)
+            stxt = st.empty()
+            for bi in range(len(outline)):
+                if str(bi) in chapters:
+                    pbar.progress((bi + 1) / len(outline))
+                    continue
+                bc = outline[bi]
+                stxt.text(f"正在生成：第{bc['number']}章 {bc['title']} ({bi+1}/{len(outline)})")
+                try:
+                    ps = "".join(f"第{outline[p]['number']}章 {outline[p].get('title','')}：{outline[p].get('summary','')}\n" for p in range(bi) if str(p) not in chapters)
+                    pc = "\n".join(chapters.get(str(p), "") for p in range(bi) if str(p) in chapters)
+                    c2 = ai2.generate_chapter(config, outline, bi, ps, pc)
+                    chapters[str(bi)] = c2
+                    st.session_state.generated_chapters = chapters
+                except Exception as e2:
+                    st.error(f"第{bc['number']}章\u5931\u8d25：{e2}")
+                pbar.progress((bi + 1) / len(outline))
+            stxt.text("\u5168\u90e8章\u8282\u751f\u6210\u5b8c\u6bd5\uff01")
+            st.session_state.batch_gen_all = False
+            st.rerun()
+
         for idx, ch in enumerate(outline):
             is_generated = str(idx) in chapters
             col1, col2 = st.columns([4, 1])
@@ -178,7 +212,8 @@ def _render_generation():
                         prev_ch = outline[pi]
                         prev_summary += f"第{prev_ch['number']}章 {prev_ch['title']}：{prev_ch.get('summary', '')}\n"
 
-                    content = ai.generate_chapter(config, outline, gen_idx, prev_summary)
+                    prev_chapters = "\n".join(chapters.get(str(p), "") for p in range(gen_idx) if str(p) in chapters)
+                    content = ai.generate_chapter(config, outline, gen_idx, prev_summary, prev_chapters)
                     chapters[str(gen_idx)] = content
                     st.session_state.generated_chapters = chapters
                     st.session_state.generating_chapter = -1
@@ -381,7 +416,7 @@ elif st.session_state.page == "settings":
         "updated_at": datetime.utcnow().isoformat(),
     }
 
-    # Update or append
+    # Update or append locally
     found = False
     for i, n in enumerate(local):
         if n.get("id") == novel_id:
@@ -390,5 +425,23 @@ elif st.session_state.page == "settings":
             break
     if not found:
         local.append(novel_entry)
-
     st.session_state.local_novels = local
+
+    # Also save to Supabase if logged in
+    user_id = st.session_state.get("user_id", "")
+    if user_id:
+        try:
+            su_url = st.secrets.get("SUPABASE_URL", "")
+            su_key = st.secrets.get("SUPABASE_ANON_KEY", "")
+            if su_url and "your-project" not in su_url:
+                from utils.supabase_client import NovelStore
+                store2 = NovelStore(su_url, su_key)
+                if store2.is_connected():
+                    if novel_id and any(n.get("id") == novel_id for n in local):
+                        store2.update_novel(novel_id, novel_entry)
+                    else:
+                        new_id = store2.save_novel(user_id, novel_entry)
+                        if new_id:
+                            st.session_state.current_novel_id = new_id
+        except Exception:
+            pass
