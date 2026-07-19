@@ -11,7 +11,17 @@ def get_supabase_store() -> NovelStore | None:
         if su_url and "your-project" not in su_url:
             store = NovelStore(su_url, su_key)
             st.session_state._supabase_store = store
-    return st.session_state.get("_supabase_store")
+    store = st.session_state.get("_supabase_store")
+    # Restore session if we have stored tokens
+    if store and store.is_connected():
+        access_token = st.session_state.get("_supabase_access_token", "")
+        refresh_token = st.session_state.get("_supabase_refresh_token", "")
+        if access_token:
+            try:
+                store.client.postgrest.auth(access_token)
+            except Exception:
+                pass
+    return store
 
 
 def render_auth():
@@ -50,6 +60,12 @@ def render_auth():
                     if "user" in result:
                         st.session_state.supabase_user = result["user"]
                         st.session_state.user_id = result["user"]["id"]
+                        # Store session for later API calls
+                        if hasattr(store.client, 'auth') and hasattr(store.client.auth, 'current_session'):
+                            sess = store.client.auth.current_session
+                            if sess:
+                                st.session_state._supabase_access_token = sess.access_token
+                                st.session_state._supabase_refresh_token = getattr(sess, 'refresh_token', '')
                         st.success("登录成功！")
                         st.rerun()
                     else:
@@ -69,7 +85,12 @@ def render_auth():
                     if "user" in result:
                         st.session_state.supabase_user = result["user"]
                         st.session_state.user_id = result["user"]["id"]
-                        st.success("注册成功！如提示需确认邮箱，请在 Supabase 设置中关闭邮件确认。")
+                        if hasattr(store.client, 'auth') and hasattr(store.client.auth, 'current_session'):
+                            sess = store.client.auth.current_session
+                            if sess:
+                                st.session_state._supabase_access_token = sess.access_token
+                                st.session_state._supabase_refresh_token = getattr(sess, 'refresh_token', '')
+                        st.success("注册成功！")
                         st.rerun()
                     else:
                         st.error(result.get("error", "注册失败"))
