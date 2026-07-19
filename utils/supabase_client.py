@@ -73,8 +73,12 @@ class NovelStore:
             result = self.client.table("novels").insert(payload).execute()
             if result.data:
                 return result.data[0].get("id", "")
-        except Exception:
-            pass
+            else:
+                import sys
+                print(f"Supabase insert: no data returned, result={result}", file=sys.stderr)
+        except Exception as e:
+            import sys
+            print(f"Supabase insert error: {e}", file=sys.stderr)
         return ""
 
     def update_novel(self, novel_id: str, novel_data: dict) -> bool:
