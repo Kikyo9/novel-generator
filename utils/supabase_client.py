@@ -64,19 +64,19 @@ class NovelStore:
                 self.client.postgrest.auth(access_token)
         except Exception:
             pass
-       payload = {
-           "user_id": user_id,
-           "title": novel_data.get("title", "未命名"),
-           "categories": novel_data.get("categories", []),
-           "protagonist": novel_data.get("protagonist", ""),
-           "length": novel_data.get("length", ""),
-           "styles": novel_data.get("styles", []),
-           "synopsis": novel_data.get("synopsis", ""),
-           "outline": json.dumps(novel_data.get("outline", []), ensure_ascii=False),
-           "chapters": json.dumps(novel_data.get("chapters", {}), ensure_ascii=False),
-           "created_at": datetime.utcnow().isoformat(),
-           "updated_at": datetime.utcnow().isoformat(),
-       }
+        payload = {
+            "user_id": user_id,
+            "title": novel_data.get("title", "未命名"),
+            "categories": novel_data.get("categories", []),
+            "protagonist": novel_data.get("protagonist", ""),
+            "length": novel_data.get("length", ""),
+            "styles": novel_data.get("styles", []),
+            "synopsis": novel_data.get("synopsis", ""),
+            "outline": json.dumps(novel_data.get("outline", []), ensure_ascii=False),
+            "chapters": json.dumps(novel_data.get("chapters", {}), ensure_ascii=False),
+            "created_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
         payload["config"] = json.dumps(novel_data.get("config", {}), ensure_ascii=False)
         return self._insert_novel(payload)
 
