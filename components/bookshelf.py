@@ -72,14 +72,15 @@ def render_bookshelf():
             with col2:
                 if st.button("\U0001f4d6 阅读", key=f"read_{novel.get('id', '')}"):
                     st.session_state.current_novel_id = novel.get("id", "")
+                    saved_config = novel.get("config", {}) or {}
                     st.session_state.workshop_config = {
-                        "categories": cats,
-                        "protagonist": novel.get("protagonist", ""),
-                        "length": length,
-                        "styles": sts,
-                        "free_text": "",
-                        "generation_mode": "outline_chapters",
-                        "novel_title": novel.get("title", ""),
+                        "categories": saved_config.get("categories", cats),
+                        "protagonist": saved_config.get("protagonist", novel.get("protagonist", "")),
+                        "length": saved_config.get("length", length),
+                        "styles": saved_config.get("styles", sts),
+                        "free_text": saved_config.get("free_text", ""),
+                        "generation_mode": saved_config.get("generation_mode", "outline_chapters"),
+                        "novel_title": saved_config.get("novel_title", novel.get("title", "")),
                     }
                     st.session_state.workshop_outline = novel.get("outline", [])
                     gen_chapters = novel.get("chapters", {})

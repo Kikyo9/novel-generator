@@ -1,4 +1,5 @@
 """Outline editor: Step 2 of the novel creation workflow."""
+import uuid
 import streamlit as st
 from utils.ai_client import NovelAI
 
@@ -50,6 +51,7 @@ def render_outline_editor():
                     # Initialize editing states
                     st.session_state.edited_outline = [
                         {
+                            "id": str(uuid.uuid4())[:8],
                             "number": ch["number"],
                             "title": ch["title"],
                             "summary": ch["summary"],
@@ -86,7 +88,8 @@ def render_outline_editor():
         edited = st.session_state.get("edited_outline", [])
         if not edited:
             edited = [
-                {"number": ch["number"], "title": ch["title"],
+                {"id": ch.get("id") or str(uuid.uuid4())[:8],
+                 "number": ch["number"], "title": ch["title"],
                  "summary": ch["summary"], "note": ""}
                 for ch in st.session_state.generated_outline
             ]
@@ -99,10 +102,11 @@ def render_outline_editor():
                 with col1:
                     st.markdown(f"**第{ch['number']}章**")
                 with col2:
+                    ch_id = ch.get("id", f"_{idx}")
                     new_title = st.text_input(
                         "标题",
                         value=ch["title"],
-                        key=f"ch_title_{idx}",
+                        key=f"ch_title_{ch_id}",
                         label_visibility="collapsed",
                     )
                     edited[idx]["title"] = new_title
@@ -110,7 +114,7 @@ def render_outline_editor():
                     new_summary = st.text_input(
                         "概要",
                         value=ch["summary"],
-                        key=f"ch_summary_{idx}",
+                        key=f"ch_summary_{ch_id}",
                         label_visibility="collapsed",
                     )
                     edited[idx]["summary"] = new_summary
@@ -118,7 +122,7 @@ def render_outline_editor():
                     new_note = st.text_input(
                         "给这章的特别要求（可选）",
                         value=ch.get("note", ""),
-                        key=f"ch_note_{idx}",
+                        key=f"ch_note_{ch_id}",
                         label_visibility="collapsed",
                         placeholder="例：这章要多写打斗场面",
                     )

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS novels (
     length TEXT DEFAULT '',
     styles TEXT[] DEFAULT '{}',
     synopsis TEXT DEFAULT '',
+    config TEXT DEFAULT '{}',
     outline TEXT DEFAULT '[]',
     chapters TEXT DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
