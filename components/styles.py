@@ -47,13 +47,13 @@ READER_CSS = """
 }
 
 /* ---- Night Mode ---- */
-.night-mode .reader-book {
+.reader-book.night-mode {
     background: #1a1a24;
     color: #c8c8d0;
     box-shadow: 0 2px 16px rgba(0,0,0,0.3),
                 0 0 0 1px rgba(255,255,255,0.04);
 }
-.night-mode .reader-book::before {
+.reader-book.night-mode::before {
     background: linear-gradient(to right,
         rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.01) 40%, transparent 100%);
 }
@@ -83,7 +83,7 @@ READER_CSS = """
     padding-top: 20px;
     border-top: 1px solid rgba(0,0,0,0.06);
 }
-.night-mode .reader-progress {
+.reader-book.night-mode .reader-progress {
     border-top-color: rgba(255,255,255,0.06);
 }
 

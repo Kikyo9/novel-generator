@@ -27,7 +27,6 @@ def render_reader():
 
     night_class = "night-mode" if night_mode else ""
 
-    st.markdown(f'<div class="{night_class}">', unsafe_allow_html=True)
 
     # Top toolbar
     col_back, col_save = st.columns([3, 1])
@@ -132,7 +131,6 @@ def render_reader():
     # Reading area
     if not outline or current_ch >= len(outline):
         st.info("没有可显示的内容")
-        st.markdown("</div>", unsafe_allow_html=True)
         return
 
     ch = outline[current_ch]
@@ -140,7 +138,7 @@ def render_reader():
     paragraphs = "".join(f"<p>{p}</p>" for p in content.strip().split("\n") if p.strip())
 
     st.markdown(f"""
-    <div class="reader-book" style="font-size:{font_size}px;line-height:{line_height};">
+    <div class="reader-book {night_class}" style="font-size:{font_size}px;line-height:{line_height};">
         <div id="reader-top"></div>
         <div class="chapter-title">第{ch['number']}章 {ch['title']}</div>
         <div class="chapter-content">{paragraphs}</div>
@@ -166,4 +164,3 @@ def render_reader():
             st.session_state.reader_current_chapter = current_ch + 1
             st.rerun()
 
-    st.markdown("</div>", unsafe_allow_html=True)
